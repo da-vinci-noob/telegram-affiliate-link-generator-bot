@@ -99,10 +99,12 @@ https://flipkart.com
 - You can delete the Branch (BRANCH_NAME) after your PR has been accepted and merged
 - Sync your local Fork Repo to Updated Project Repo.
 
-  > `git pull upstream master`
+  > `git pull upstream main`
 
-  > `git push origin master`
+  > `git push origin main`
 
 ---
-Contributions are welcome! <3.
+
+Thanks, Contributions are welcome! <3.
+
 Made with :heart: and ![Ruby](https://img.shields.io/badge/-Ruby-000000?style=flat&logo=ruby)
