@@ -30,6 +30,8 @@ class Bot
           reply.text = "Hello, Your Bitly Access Token has been set to #{setup_bitly}. 🤖"
         when %r{^/flipkart }
           reply.text = "Hello, Your Flipkart Affiliate ID has been set to #{setup_flipkart}. 🤖"
+        when %r{^/forward }
+          reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
         when /http/i
           if validate_setup
             urls = URI.extract(@command)
@@ -38,6 +40,7 @@ class Bot
               new_url = process_url(url)
               @updated_msg = @updated_msg.sub(url, new_url)
             end
+            @success = true
           else
             @updated_msg = "Please do the Setup First /help"
           end
@@ -47,6 +50,17 @@ class Bot
         end
         puts "sending #{reply.text.inspect} to @#{message.from.username}"
         reply.send_with(bot)
+        channel_id = @redis.get("#{@chat_id}:forward")
+        if @success && channel_id
+          begin
+            send_to_channel(channel_id, reply.text).send_with(bot)
+          rescue NameError => e
+            reply.text = "Please Double check Channel Username and if you have added the Bot as an Admin to the Channel."
+            reply.send_with(bot)
+            puts "Error with Channel ID"
+          end
+        end
+        @success = false
       end
     end
   end
@@ -56,7 +70,7 @@ class Bot
   end
 
   def help_text
-    "Hello, #{@first_name}. 🤖\nYou need to make do some setup before the using this Bot\n\n\nAvailable Commands are\n\n1. Set your Amazon Affiliate Tracking ID\n/amazon <tracking_id>\nExample: /amazon track-21\n\n2. Set your Flipkart Affiliate Tracking ID\n/flipkart <tracking_id>\nExample: /flipkart track_id\n\n3. Set your Bitly API Key for link shortning\n/bitly <api_key>\nClick here to know how to setup /bitly_setup\nExample: /bitly API_KEYbhdsirb\n\n\nAnd Finally\nSend Your Message with Flipkart or Amazon Link"
+    "Hello, #{@first_name}. 🤖\nYou need to make do some setup before the using this Bot\n\n\nAvailable Commands are\n\n1. Set your Amazon Affiliate Tracking ID\n/amazon <tracking_id>\nExample: /amazon track-21\n\n2. Set your Flipkart Affiliate Tracking ID\n/flipkart <tracking_id>\nExample: /flipkart track_id\n\n3. Set your Bitly API Key for link shortning\n/bitly <api_key>\nClick here to know how to setup /bitly_setup\nExample: /bitly API_KEYbhdsirb\n\n4. *NEW ADDITION* (Optional)\nForward your messages to Channel. Add this bot to your channel as an Admin and setup the Channel in the Bot by command /forward <username of the channel including @>\nExample: /forward @google\n\n\nAnd Finally\nSend Your Message with Flipkart or Amazon Link"
   end
 
   def bityly_setup_text
@@ -79,6 +93,12 @@ class Bot
     bitly_id = @command.sub('/bitly ', '')
     @redis.set("#{@chat_id}:bitly_id", bitly_id)
     bitly_id
+  end
+
+  def setup_forward
+    channel_id = @command.sub('/forward ', '')
+    @redis.set("#{@chat_id}:forward", channel_id)
+    channel_id
   end
 
   def shorten_url(url)
@@ -126,5 +146,13 @@ class Bot
 
   def validate_setup
     @redis.exists?("#{@chat_id}:bitly_id") && @redis.exists?("#{@chat_id}:fkrt_id") && @redis.exists?("#{@chat_id}:amzn_id")
+  end
+
+  def send_to_channel(channel_id, text)
+    channel = TelegramBot::Channel.new(id: channel_id)
+    message = TelegramBot::OutMessage.new
+    message.chat = channel
+    message.text = text
+    message
   end
 end

@@ -1,5 +1,9 @@
 # Telegram Affliate Link Generator Bot [Amazon/Flipkart]
 
+**NEW ADDITION** (Optional)
+
+Forward your messages to channel.
+
 ## Setup
 
 1. Fork the Repo
@@ -40,6 +44,12 @@ REDIS_URL = <URL for Redis Server>
 
 ```
 /bitly API-KETuIB
+```
+
+20. (Optional) Add your channel username to the bot for auto-forwarding of messages. Example below
+
+```
+/forward @username
 ```
 
 Note:
