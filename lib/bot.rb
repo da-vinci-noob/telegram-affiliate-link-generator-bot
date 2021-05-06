@@ -36,11 +36,16 @@ class Bot
           if validate_setup
             urls = URI.extract(@command)
             @updated_msg = @command
-            urls.each do |url|
-              new_url = process_url(url)
-              @updated_msg = @updated_msg.sub(url, new_url)
+            begin
+              urls.each do |url|
+                new_url = process_url(url)
+                @updated_msg = @updated_msg.sub(url, new_url)
+              end
+              @success = true
+            rescue SocketError => e
+              @updated_msg = "Can't Connect to the server #{e.inspect}"
+              @success = false
             end
-            @success = true
           else
             @updated_msg = "Please do the Setup First /help"
           end
