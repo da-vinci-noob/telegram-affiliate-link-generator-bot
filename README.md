@@ -4,6 +4,8 @@
 
 1. Forward your messages to channel.
 2. Disable Link Previews for the Messages returned with Affiliate links.
+3. You can now add characters/text/word to delete from message
+4. See What words you added to delete.
 
 ## Setup
 
@@ -58,6 +60,19 @@ REDIS_URL = <URL for Redis Server>
 ```
 /previews disable (For Disabling Previews)
 /previews *any other text* (For Enabling Previews if disabled)
+```
+
+22. (Optional) You can now add characters/text/word to delete from message (This can include any promotional message). Example below
+
+```
+/delete *text to delete*
+/delete hello
+```
+
+23. Show Your Words which you have included to the delete list.. Example below
+
+```
+/show_deleted
 ```
 
 Note:
@@ -126,3 +141,5 @@ https://flipkart.com
 Thanks, Contributions are welcome! <3.
 
 Made with :heart: and ![Ruby](https://img.shields.io/badge/-Ruby-000000?style=flat&logo=ruby)
+
+#### DISCLAIMER: This software is for educational purposes only. This software should not be used for illegal activity. The author is not responsible for its use.
