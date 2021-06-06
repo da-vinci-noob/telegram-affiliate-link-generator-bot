@@ -30,6 +30,14 @@ class Bot
           reply.text = "Hello, Your Bitly Access Token has been set to #{setup_bitly}. 🤖"
         when %r{^/flipkart }
           reply.text = "Hello, Your Flipkart Affiliate ID has been set to #{setup_flipkart}. 🤖"
+        when %r{^/previews }
+          previews = @command.sub('/previews ', '')
+          @redis.set("#{@chat_id}:previews", previews)
+          if previews == "disable"
+            reply.text = "Your Link Previews will be disabled from now!"
+          else
+            reply.text = "Your Link Previews will be enabled from now!"
+          end
         when %r{^/forward }
           reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
         when /http/i
@@ -54,6 +62,7 @@ class Bot
           reply.text = "I have no idea what #{@command.inspect} means. You can view available commands with \help"
         end
         puts "sending #{reply.text.inspect} to @#{message.from.username}"
+        reply.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == "disable"
         reply.send_with(bot)
         channel_id = @redis.get("#{@chat_id}:forward")
         if @success && channel_id
@@ -75,7 +84,12 @@ class Bot
   end
 
   def help_text
-    "Hello, #{@first_name}. 🤖\nYou need to make do some setup before the using this Bot\n\n\nAvailable Commands are\n\n1. Set your Amazon Affiliate Tracking ID\n/amazon <tracking_id>\nExample: /amazon track-21\n\n2. Set your Flipkart Affiliate Tracking ID\n/flipkart <tracking_id>\nExample: /flipkart track_id\n\n3. Set your Bitly API Key for link shortning\n/bitly <api_key>\nClick here to know how to setup /bitly_setup\nExample: /bitly API_KEYbhdsirb\n\n4. *NEW ADDITION* (Optional)\nForward your messages to Channel. Add this bot to your channel as an Admin and setup the Channel in the Bot by command /forward <username of the channel including @>\nExample: /forward @google\n\n\nAnd Finally\nSend Your Message with Flipkart or Amazon Link"
+    "Hello, #{@first_name}. 🤖\nYou need to make do some setup before the using this Bot\n\n\nAvailable Commands are\n\n
+    1. Set your Amazon Affiliate Tracking ID\n/amazon <tracking_id>\nExample: /amazon track-21\n\n
+    2. Set your Flipkart Affiliate Tracking ID\n/flipkart <tracking_id>\nExample: /flipkart track_id\n\n
+    3. Set your Bitly API Key for link shortning\n/bitly <api_key>\nClick here to know how to setup /bitly_setup\nExample: /bitly API_KEYbhdsirb\n\n
+    4. *NEW ADDITION* (Optional)\nForward your messages to Channel. Add this bot to your channel as an Admin and setup the Channel in the Bot by command /forward <username of the channel including @>\nExample: /forward @google\n\n
+    5. *NEW ADDITION* (Optional)\nYou can disable link Previews for the messages that bot returns.\nExample: \n/previews disable (For Disabling Link previews)\n/previews *anything else* (For Enabling Link Previews)\n\n\nAnd Finally\nSend Your Message with Flipkart or Amazon Link"
   end
 
   def bityly_setup_text
