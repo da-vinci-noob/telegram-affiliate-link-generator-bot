@@ -38,6 +38,15 @@ class Bot
           else
             reply.text = "Your Link Previews will be enabled from now!"
           end
+        when %r{^/delete }
+          delete = @command.sub('/delete ', '')
+          @redis.sadd("#{@chat_id}:delete", [delete])
+          reply.text = "#{delete}, has been added to the list of text which will be removed from the returned message by bot"
+        when %r{^/forward }
+          reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
+        when %r{^/show_deleted}
+          text = @redis.smembers("#{@chat_id}:delete")
+          reply.text = "#{text.join(", ")}\nThese words has been added by you to the Bot and will be removed from the Returned Message"
         when %r{^/forward }
           reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
         when /http/i
@@ -53,11 +62,16 @@ class Bot
             rescue SocketError => e
               @updated_msg = "Can't Connect to the server #{e.inspect}"
               @success = false
+            rescue URI::InvalidURIError => e
+              @updated_msg = "Invalid URL #{e.inspect}"
+              @success = false
             end
           else
             @updated_msg = "Please do the Setup First /help"
           end
           reply.text = @updated_msg
+          to_delete = @redis.smembers("#{@chat_id}:delete")
+          reply.text.gsub!(Regexp.union(to_delete),'') unless to_delete.empty?
         else
           reply.text = "I have no idea what #{@command.inspect} means. You can view available commands with \help"
         end
@@ -89,7 +103,11 @@ class Bot
     2. Set your Flipkart Affiliate Tracking ID\n/flipkart <tracking_id>\nExample: /flipkart track_id\n\n
     3. Set your Bitly API Key for link shortning\n/bitly <api_key>\nClick here to know how to setup /bitly_setup\nExample: /bitly API_KEYbhdsirb\n\n
     4. *NEW ADDITION* (Optional)\nForward your messages to Channel. Add this bot to your channel as an Admin and setup the Channel in the Bot by command /forward <username of the channel including @>\nExample: /forward @google\n\n
-    5. *NEW ADDITION* (Optional)\nYou can disable link Previews for the messages that bot returns.\nExample: \n/previews disable (For Disabling Link previews)\n/previews *anything else* (For Enabling Link Previews)\n\n\nAnd Finally\nSend Your Message with Flipkart or Amazon Link"
+    5. *NEW ADDITION* (Optional)\nYou can disable link Previews for the messages that bot returns.\nExample: \n/previews disable (For Disabling Link previews)\n/previews *anything else* (For Enabling Link Previews)\n\n
+    6. *NEW ADDITION* (Optional)\nYou can now add characters/text/word to delete from message (This can include any promotional message.) by /delete *text to delete*
+    Example: /delete hello\n\n
+    7. Show Your Words which you have included to the delete list.
+    Example: /show_deleted\n\n\nAnd Finally\nSend Your Message with Flipkart or Amazon Link"
   end
 
   def bityly_setup_text
