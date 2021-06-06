@@ -172,6 +172,7 @@ class Bot
     message = TelegramBot::OutMessage.new
     message.chat = channel
     message.text = text
+    message.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == "disable"
     message
   end
 end
