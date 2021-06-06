@@ -2,7 +2,8 @@
 
 **NEW ADDITION** (Optional)
 
-Forward your messages to channel.
+1. Forward your messages to channel.
+2. Disable Link Previews for the Messages returned with Affiliate links.
 
 ## Setup
 
@@ -50,6 +51,13 @@ REDIS_URL = <URL for Redis Server>
 
 ```
 /forward @username
+```
+
+21. (Optional) Disable Link Previews for messages sent back to the bot and channel with affiliate link. Example below
+
+```
+/previews disable (For Disabling Previews)
+/previews *any other text* (For Enabling Previews if disabled)
 ```
 
 Note:
