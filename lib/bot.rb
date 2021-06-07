@@ -28,7 +28,12 @@ class Bot
           text = @command.sub('/send_to_all ', '')
           all_users = @redis.keys.map { |a| a.split(':')[0] }.uniq
           all_users.each do | user |
-            send_to_channel(user, text).send_with(bot)
+            begin
+              send_to_channel(user, text).send_with(bot)
+            rescue => e
+              @error = e.inspect
+              puts e.inspect
+            end
           end
           reply.parse_mode = 'Markdown'
           users = all_users.map { |user| "[#{user}](tg://user?id=#{user})\n" }
