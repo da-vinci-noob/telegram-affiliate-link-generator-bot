@@ -20,9 +20,9 @@ class Bot
         case @command
         when %r{^/start}
           reply.text = start_text
-        when /help/i
+        when %r{^/help}
           reply.text = help_text
-        when /bitly_setup/i
+        when %r{^/bitly_setup}
           reply.text = bityly_setup_text
         when %r{^/amazon }
           reply.text = "Hello, Your Amazon Affiliate ID has been set to #{setup_amazon}. 🤖"
