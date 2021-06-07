@@ -24,6 +24,15 @@ class Bot
           reply.text = help_text
         when %r{^/bitly_setup}
           reply.text = bityly_setup_text
+        when %r{^/send_to_all }
+          text = @command.sub('/send_to_all ', '')
+          all_users = @redis.keys.map { |a| a.split(':')[0] }.uniq
+          all_users.each do | user |
+            send_to_channel(user, text).send_with(bot)
+          end
+          reply.parse_mode = 'Markdown'
+          users = all_users.map { |user| "[#{user}](tg://user?id=#{user})\n" }
+          reply.text = "Your message has been sent to\n\n#{users.join()}"
         when %r{^/amazon }
           reply.text = "Hello, Your Amazon Affiliate ID has been set to #{setup_amazon}. 🤖"
         when %r{^/bitly }
