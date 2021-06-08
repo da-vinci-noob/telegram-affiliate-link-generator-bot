@@ -51,7 +51,7 @@ class Bot
           reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
         when /http/i
           if validate_setup
-            urls = URI.extract(@command)
+            urls = URI.extract(@command, %w(http https))
             @updated_msg = @command
             begin
               urls.each do |url|
