@@ -9,8 +9,12 @@ class AffiliateProcess
   end
 
   def fetch_url
-    response = HTTParty.get(@updated_url)
-    @updated_url = response.request.last_uri.to_s
+    response = HTTParty.get(@updated_url, follow_redirects: false)
+    if response.code == 301
+      @updated_url = response.headers[:location]
+    else
+      response.request.last_uri.to_s
+    end
   end
 
   def clean_url
