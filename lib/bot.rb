@@ -54,11 +54,12 @@ class Bot
             urls = URI.extract(@command, %w(http https))
             @updated_msg = @command
             begin
+              @success = true
               urls.each do |url|
                 new_url = process_url(url)
                 @updated_msg = @updated_msg.sub(url, new_url)
+                @success = false if new_url.include? "URL Not Supported"
               end
-              @success = true
             rescue SocketError => e
               @updated_msg = "Can't Connect to the server #{e.inspect}"
               @success = false
