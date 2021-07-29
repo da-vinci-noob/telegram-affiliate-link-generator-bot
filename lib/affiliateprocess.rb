@@ -22,6 +22,7 @@ class AffiliateProcess
     params = uri.query_values
     params.delete('affid') unless params.nil?
     params.delete('tag') unless params.nil?
+    params.delete('vsugd') unless params.nil?
     uri.query_values = params
     @updated_url = uri.to_s
   end
