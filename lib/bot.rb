@@ -139,10 +139,16 @@ class Bot
     channel_id
   end
 
-  def shorten_url(url)
+  def shorten_url(url, flipkart = false)
     begin
-      bitly_id = @redis.get("#{@chat_id}:bitly_id")
-      BitlyUrl.new(bitly_id, url).short_url
+      if flipkart
+        fkrt_url = "https://affiliate.flipkart.com/a_url_shorten?url=#{CGI.escape(url)}"
+        res = HTTParty.get(fkrt_url, follow_redirects: false)
+        res['response']['shortened_url']
+      else
+        bitly_id = @redis.get("#{@chat_id}:bitly_id")
+        BitlyUrl.new(bitly_id, url).short_url
+      end
     rescue => e
       @error = e.inspect
       puts e.inspect
@@ -179,7 +185,7 @@ class Bot
     flipkart.clean_url
     fkrt_id = @redis.get("#{@chat_id}:fkrt_id")
     flipkart.add_tracking_id(fkrt_id)
-    shorten_url(flipkart.updated_url)
+    shorten_url(flipkart.updated_url, flipkart = true)
   end
 
   def validate_setup
