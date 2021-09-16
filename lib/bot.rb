@@ -189,13 +189,18 @@ class Bot
   end
 
   def process_redirection(url)
-    url_response = get_redirected_url(url)
-    urls = URI.extract(url_response, %w[http https])
+    url = get_redirected_url(url)
+
+    return process_flipkart_url(url.request.last_uri) if url.request.last_uri.host.include? 'flipkart'
+
+    return process_amazon_url(url.request.last_uri) if url.request.last_uri.host.include? 'amazon'
+
+    urls = URI.extract(url.parsed_response, %w[http https])
     urls.each { |u| @flipkart = u if u.include? 'flipkart' }
     return process_flipkart_url(@flipkart) if defined? @flipkart
 
-    url_response = get_redirected_url(urls[2]) if url_response.include? 'cashbackUrl'
-    "URL Not Supported: #{url_response}"
+    url = get_redirected_url(urls[2]) if url.include? 'cashbackUrl'
+    "URL Not Supported: #{url.parsed_response}"
   end
 
   def get_redirected_url(url)
@@ -207,7 +212,7 @@ class Bot
 
         processed_url = @res.request.last_uri.to_s
       end
-      @res.parsed_response
+      @res
     rescue => e
       "#{e.message}: #{@res.request.last_uri.to_s} "
     end
