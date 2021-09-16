@@ -166,7 +166,7 @@ class Bot
     when /fkrt.it/
       process_flipkart_url(url, short = true)
     else
-      "URL Not Supported: #{url}"
+      process_redirection(url)
     end
   end
 
@@ -186,6 +186,31 @@ class Bot
     fkrt_id = @redis.get("#{@chat_id}:fkrt_id")
     flipkart.add_tracking_id(fkrt_id)
     shorten_url(flipkart.updated_url, flipkart = true)
+  end
+
+  def process_redirection(url)
+    url_response = get_redirected_url(url)
+    urls = URI.extract(url_response, %w[http https])
+    urls.each { |u| @flipkart = u if u.include? 'flipkart' }
+    return process_flipkart_url(@flipkart) if defined? @flipkart
+
+    url_response = get_redirected_url(urls[2]) if url_response.include? 'cashbackUrl'
+    "URL Not Supported: #{url_response}"
+  end
+
+  def get_redirected_url(url)
+    processed_url = url
+    begin
+      loop do
+        @res = HTTParty.get(processed_url)
+        break if @res.request.last_uri.to_s == processed_url
+
+        processed_url = @res.request.last_uri.to_s
+      end
+      @res.parsed_response
+    rescue => e
+      "#{e.message}: #{@res.request.last_uri.to_s} "
+    end
   end
 
   def validate_setup
