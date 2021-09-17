@@ -56,8 +56,8 @@ class Bot
             begin
               @success = true
               urls.each do |url|
-                new_url = process_url(url)
-                @updated_msg = @updated_msg.sub(url, new_url)
+                new_url = process_url(url).to_s
+                @updated_msg.sub!(url, new_url)
                 @success = false if new_url.include? "URL Not Supported"
               end
             rescue SocketError => e
