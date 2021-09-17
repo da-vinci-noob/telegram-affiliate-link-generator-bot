@@ -58,7 +58,7 @@ class Bot
               urls.each do |url|
                 new_url = process_url(url).to_s
                 @updated_msg.sub!(url, new_url)
-                @success = false if new_url.include? "URL Not Supported"
+                @success = false if (new_url.include? 'URL Not Supported') || new_url.nil?
               end
             rescue SocketError => e
               @updated_msg = "Can't Connect to the server #{e.inspect}"
