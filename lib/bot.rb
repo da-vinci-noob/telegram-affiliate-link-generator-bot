@@ -200,7 +200,7 @@ class Bot
     return process_flipkart_url(@flipkart) if defined? @flipkart
 
     url = get_redirected_url(urls[2]) if url.include? 'cashbackUrl'
-    "URL Not Supported: #{url.parsed_response}"
+    "URL Not Supported: #{url.request.last_uri}"
   end
 
   def get_redirected_url(url)
