@@ -138,6 +138,7 @@ class Bot
 
   def process_redirection(url)
     url = get_redirected_url(url)
+    return "URL Not Supported: #{url}" if url.is_a?(String)
 
     return process_flipkart_url(url.request.last_uri) if url.request.last_uri.host.include? 'flipkart'
 
@@ -162,7 +163,7 @@ class Bot
       end
       @res
     rescue => e
-      "Error: #{e.message}: #{@res.request.last_uri} "
+      "Error: #{e.message}: #{@res&.request&.last_uri} "
     end
   end
 
