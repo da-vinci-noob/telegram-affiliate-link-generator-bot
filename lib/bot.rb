@@ -6,6 +6,7 @@ require 'httparty'
 require_relative 'bitlyurl'
 require_relative 'affiliateprocess'
 require_relative 'instruction'
+require_relative 'setup'
 
 class Bot
   def initialize
@@ -18,6 +19,7 @@ class Bot
       @chat_id = message.chat.id
       @first_name = message.from.first_name
       instruction = Instruction.new(@first_name)
+      setup = Setup.new(redis: @redis, chat_id: @chat_id, command: @command)
       message.reply do |reply|
         case @command
         when %r{^/start}
@@ -27,28 +29,19 @@ class Bot
         when %r{^/bitly_setup}
           reply.text = instruction.bitly
         when %r{^/amazon }
-          reply.text = "Hello, Your Amazon Affiliate ID has been set to #{setup_amazon}. 🤖"
+          reply.text = setup.amazon
         when %r{^/bitly }
-          reply.text = "Hello, Your Bitly Access Token has been set to #{setup_bitly}. 🤖"
+          reply.text = setup.bitly
         when %r{^/flipkart }
-          reply.text = "Hello, Your Flipkart Affiliate ID has been set to #{setup_flipkart}. 🤖"
+          reply.text = setup.flipkart
         when %r{^/previews }
-          previews = @command.sub('/previews ', '')
-          @redis.set("#{@chat_id}:previews", previews)
-          if previews == 'disable'
-            reply.text = 'Your Link Previews will be disabled from now!'
-          else
-            reply.text = 'Your Link Previews will be enabled from now!'
-          end
+          reply.text = setup.previews
         when %r{^/delete }
-          delete = @command.sub('/delete ', '')
-          @redis.sadd("#{@chat_id}:delete", [delete])
-          reply.text = "#{delete}, has been added to the list of text which will be removed from the returned message by bot"
+          reply.text = setup.delete
         when %r{^/forward }
-          reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
+          reply.text = setup.forward
         when %r{^/show_deleted}
-          text = @redis.smembers("#{@chat_id}:delete")
-          reply.text = "#{text.join(', ')}\nThese words has been added by you to the Bot and will be removed from the Returned Message"
+          reply.text = setup.show_deleted
         when /http/i
           if validate_setup
             urls = URI.extract(@command, %w[http https])
@@ -68,11 +61,11 @@ class Bot
               @success = false
             end
           else
-            @updated_msg = 'Please do the Setup First /help'
+            @updated_msg = 'Please do the Setup First /help. If you want to use only Amazon Affiliate you can add any random work for flipkart or vice versa'
           end
           reply.text = @updated_msg
           to_delete = @redis.smembers("#{@chat_id}:delete")
-          reply.text.gsub!(Regexp.union(to_delete),'') unless to_delete.empty?
+          reply.text.gsub!(Regexp.union(to_delete), '') unless to_delete.empty?
         else
           reply.text = "I have no idea what #{@command.inspect} means. You can view available commands with \help"
         end
@@ -92,30 +85,6 @@ class Bot
         @success = false
       end
     end
-  end
-
-  def setup_amazon
-    amzn_id = @command.sub('/amazon ', '')
-    @redis.set("#{@chat_id}:amzn_id", amzn_id)
-    amzn_id
-  end
-
-  def setup_flipkart
-    fkrt_id = @command.sub('/flipkart ', '')
-    @redis.set("#{@chat_id}:fkrt_id", fkrt_id)
-    fkrt_id
-  end
-
-  def setup_bitly
-    bitly_id = @command.sub('/bitly ', '')
-    @redis.set("#{@chat_id}:bitly_id", bitly_id)
-    bitly_id
-  end
-
-  def setup_forward
-    channel_id = @command.sub('/forward ', '')
-    @redis.set("#{@chat_id}:forward", channel_id)
-    channel_id
   end
 
   def shorten_url(url, flipkart: false)
