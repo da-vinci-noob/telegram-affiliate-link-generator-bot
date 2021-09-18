@@ -33,10 +33,10 @@ class Bot
         when %r{^/previews }
           previews = @command.sub('/previews ', '')
           @redis.set("#{@chat_id}:previews", previews)
-          if previews == "disable"
-            reply.text = "Your Link Previews will be disabled from now!"
+          if previews == 'disable'
+            reply.text = 'Your Link Previews will be disabled from now!'
           else
-            reply.text = "Your Link Previews will be enabled from now!"
+            reply.text = 'Your Link Previews will be enabled from now!'
           end
         when %r{^/delete }
           delete = @command.sub('/delete ', '')
@@ -46,12 +46,10 @@ class Bot
           reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
         when %r{^/show_deleted}
           text = @redis.smembers("#{@chat_id}:delete")
-          reply.text = "#{text.join(", ")}\nThese words has been added by you to the Bot and will be removed from the Returned Message"
-        when %r{^/forward }
-          reply.text = "Hello, Your Messages will be forward to #{setup_forward}. 🤖"
+          reply.text = "#{text.join(', ')}\nThese words has been added by you to the Bot and will be removed from the Returned Message"
         when /http/i
           if validate_setup
-            urls = URI.extract(@command, %w(http https))
+            urls = URI.extract(@command, %w[http https])
             @updated_msg = @command
             begin
               @success = true
@@ -68,7 +66,7 @@ class Bot
               @success = false
             end
           else
-            @updated_msg = "Please do the Setup First /help"
+            @updated_msg = 'Please do the Setup First /help'
           end
           reply.text = @updated_msg
           to_delete = @redis.smembers("#{@chat_id}:delete")
@@ -77,16 +75,16 @@ class Bot
           reply.text = "I have no idea what #{@command.inspect} means. You can view available commands with \help"
         end
         puts "sending #{reply.text.inspect} to @#{message.from.username}"
-        reply.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == "disable"
+        reply.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == 'disable'
         reply.send_with(bot)
         channel_id = @redis.get("#{@chat_id}:forward")
         if @success && channel_id
           begin
             send_to_channel(channel_id, reply.text).send_with(bot)
           rescue NameError => e
-            reply.text = "Please Double check Channel Username and if you have added the Bot as an Admin to the Channel."
+            reply.text = 'Please Double check Channel Username and if you have added the Bot as an Admin to the Channel.'
             reply.send_with(bot)
-            puts "Error with Channel ID"
+            puts 'Error with Channel ID'
           end
         end
         @success = false
@@ -126,7 +124,7 @@ class Bot
     @redis.set("#{@chat_id}:fkrt_id", fkrt_id)
     fkrt_id
   end
-  
+
   def setup_bitly
     bitly_id = @command.sub('/bitly ', '')
     @redis.set("#{@chat_id}:bitly_id", bitly_id)
@@ -139,7 +137,7 @@ class Bot
     channel_id
   end
 
-  def shorten_url(url, flipkart = false)
+  def shorten_url(url, flipkart: false)
     begin
       if flipkart
         fkrt_url = "https://affiliate.flipkart.com/a_url_shorten?url=#{CGI.escape(url)}"
@@ -158,19 +156,19 @@ class Bot
   def process_url(url)
     case url
     when /amazon.in/
-      process_amazon_url(url, short = false)
+      process_amazon_url(url, short: false)
     when /amzn.to/, /amzn.in/
-      process_amazon_url(url, short = true)
+      process_amazon_url(url, short: true)
     when /flipkart.com/
-      process_flipkart_url(url, short = false)
+      process_flipkart_url(url, short: false)
     when /fkrt.it/
-      process_flipkart_url(url, short = true)
+      process_flipkart_url(url, short: true)
     else
       process_redirection(url)
     end
   end
 
-  def process_amazon_url(url, short = false)
+  def process_amazon_url(url, short: false)
     amazon = AffiliateProcess.new(url, 'tag')
     amazon.fetch_url if short
     amazon.clean_url
@@ -179,13 +177,13 @@ class Bot
     shorten_url(amazon.updated_url)
   end
 
-  def process_flipkart_url(url, short = false)
+  def process_flipkart_url(url, short: false)
     flipkart = AffiliateProcess.new(url, 'affid')
     flipkart.fetch_url if short
     flipkart.clean_url
     fkrt_id = @redis.get("#{@chat_id}:fkrt_id")
     flipkart.add_tracking_id(fkrt_id)
-    shorten_url(flipkart.updated_url, flipkart = true)
+    shorten_url(flipkart.updated_url, flipkart: true)
   end
 
   def process_redirection(url)
@@ -227,7 +225,7 @@ class Bot
     message = TelegramBot::OutMessage.new
     message.chat = channel
     message.text = text
-    message.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == "disable"
+    message.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == 'disable'
     message
   end
 end
