@@ -18,7 +18,7 @@ class AffiliateProcess
   end
 
   def clean_url
-    url = Addressable::URI.unencode(@updated_url)
+    url = Addressable::URI.unencode(@updated_url.to_s)
     url = remove_existing_tracking_ids(url)
     uri = Addressable::URI.parse(url)
     @updated_url = uri.to_s
