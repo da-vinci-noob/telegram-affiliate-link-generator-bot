@@ -7,6 +7,7 @@ require_relative 'bitlyurl'
 require_relative 'affiliateprocess'
 require_relative 'instruction'
 require_relative 'setup'
+require_relative 'validate'
 
 class Bot
   def initialize
@@ -19,6 +20,7 @@ class Bot
       @chat_id = message.chat.id
       @first_name = message.from.first_name
       instruction = Instruction.new(@first_name)
+      validate = Validate.new(@chat_id)
       setup = Setup.new(redis: @redis, chat_id: @chat_id, command: @command)
       message.reply do |reply|
         case @command
@@ -43,27 +45,27 @@ class Bot
         when %r{^/show_deleted}
           reply.text = setup.show_deleted
         when /http/i
-          if validate_setup
+          if validate.affiliate_tags
             urls = URI.extract(@command, %w[http https])
-            @updated_msg = @command
+            updated_msg = @command
             begin
               @success = true
               urls.each do |url|
                 new_url = process_url(url).to_s
-                @updated_msg.sub!(url, new_url)
+                updated_msg.sub!(url, new_url)
                 @success = false if (new_url.include? 'URL Not Supported') || new_url.nil? || new_url.empty?
               end
             rescue SocketError => e
-              @updated_msg = "Can't Connect to the server #{e.inspect}"
+              updated_msg = "Can't Connect to the server #{e.inspect}"
               @success = false
             rescue URI::InvalidURIError => e
-              @updated_msg = "Invalid URL #{e.inspect}"
+              updated_msg = "Invalid URL #{e.inspect}"
               @success = false
             end
           else
-            @updated_msg = 'Please do the Setup First /help. If you want to use only Amazon Affiliate you can add any random work for flipkart or vice versa'
+            updated_msg = 'Please do the Setup First /help. If you want to use only Amazon Affiliate you can add any random work for flipkart or vice versa'
           end
-          reply.text = @updated_msg
+          reply.text = updated_msg
           to_delete = @redis.smembers("#{@chat_id}:delete")
           reply.text.gsub!(Regexp.union(to_delete), '') unless to_delete.empty?
         else
@@ -165,10 +167,6 @@ class Bot
     rescue => e
       "Error: #{e.message}: #{@res&.request&.last_uri} "
     end
-  end
-
-  def validate_setup
-    @redis.exists?("#{@chat_id}:bitly_id") && @redis.exists?("#{@chat_id}:fkrt_id") && @redis.exists?("#{@chat_id}:amzn_id")
   end
 
   def send_to_channel(channel_id, text)
