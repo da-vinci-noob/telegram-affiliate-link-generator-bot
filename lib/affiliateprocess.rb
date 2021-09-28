@@ -18,8 +18,9 @@ class AffiliateProcess
   end
 
   def clean_url
-    uri = Addressable::URI.parse(@updated_url)
-    uri.query_values = remove_existing_tracking_ids(uri.query_values)
+    url = Addressable::URI.unencode(@updated_url)
+    url = remove_existing_tracking_ids(url)
+    uri = Addressable::URI.parse(url)
     @updated_url = uri.to_s
   end
 
@@ -28,10 +29,12 @@ class AffiliateProcess
     @updated_url = "#{@updated_url}&#{@tag}=#{tracking_id}"
   end
 
-  def remove_existing_tracking_ids(params)
-    params&.delete('affid')
-    params&.delete('tag')
-    params&.delete('vsugd')
-    params
+  def remove_existing_tracking_ids(url)
+    url = url.split('&').reject do |param|
+      param.match(/^aff.*=/) ||
+        param.match(/^tag=/) ||
+        param.match(/^vsugd.*=/)
+    end
+    url.join('&')
   end
 end
