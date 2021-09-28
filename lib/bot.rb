@@ -22,7 +22,7 @@ class Bot
       @first_name = message.from.first_name
       instruction = Instruction.new(@first_name)
       validate = Validate.new(@chat_id)
-      setup = Setup.new(redis: @redis, chat_id: @chat_id, command: @command)
+      setup = Setup.new(chat_id: @chat_id, command: @command)
       message.reply do |reply|
         case @command
         when %r{^/start}
@@ -68,15 +68,15 @@ class Bot
             updated_msg = 'Please do the Setup First /help. If you want to use only Amazon Affiliate you can add any random work for flipkart or vice versa'
           end
           reply.text = updated_msg
-          to_delete = @redis.smembers("#{@chat_id}:delete")
+          to_delete = Redis.current.smembers("#{@chat_id}:delete")
           reply.text.gsub(/#{Regexp.union(to_delete).source}/i, '') unless to_delete.empty?
         else
           reply.text = "I have no idea what #{@command} means. You can view available commands with \help"
         end
         puts "sending #{reply.text.inspect} to @#{message.from.username}"
-        reply.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == 'disable'
+        reply.disable_web_page_preview = true if Redis.current.get("#{@chat_id}:previews") == 'disable'
         reply.send_with(bot)
-        channel_id = @redis.get("#{@chat_id}:forward")
+        channel_id = Redis.current.get("#{@chat_id}:forward")
         if @success && channel_id
           begin
             send_to_channel(channel_id, reply.text).send_with(bot)
@@ -96,7 +96,7 @@ class Bot
     message = TelegramBot::OutMessage.new
     message.chat = channel
     message.text = text
-    message.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == 'disable'
+    message.disable_web_page_preview = true if Redis.current.get("#{@chat_id}:previews") == 'disable'
     message
   end
 end
