@@ -3,13 +3,14 @@ require 'redis'
 require 'uri'
 require 'httparty'
 
-require_relative 'bitlyurl'
 require_relative 'affiliateprocess'
 require_relative 'instruction'
 require_relative 'setup'
 require_relative 'validate'
+require_relative 'process_url'
 
 class Bot
+  include ProcessUrl
   def initialize
     @redis = Redis.new(host: ENV['REDIS_HOST'])
     bot = TelegramBot.new(token: ENV['BOT_TOKEN'])
@@ -50,8 +51,9 @@ class Bot
             updated_msg = @command
             begin
               @success = true
+              ProcessUrl.chat_id = @chat_id
               urls.each do |url|
-                new_url = process_url(url).to_s
+                new_url = ProcessUrl.individual(url).to_s
                 updated_msg.sub!(url, new_url)
                 @success = false if (new_url.include? 'URL Not Supported') || new_url.nil? || new_url.empty?
               end
@@ -67,9 +69,9 @@ class Bot
           end
           reply.text = updated_msg
           to_delete = @redis.smembers("#{@chat_id}:delete")
-          reply.text.gsub!(Regexp.union(to_delete), '') unless to_delete.empty?
+          reply.text.gsub(/#{Regexp.union(to_delete).source}/i, '') unless to_delete.empty?
         else
-          reply.text = "I have no idea what #{@command.inspect} means. You can view available commands with \help"
+          reply.text = "I have no idea what #{@command} means. You can view available commands with \help"
         end
         puts "sending #{reply.text.inspect} to @#{message.from.username}"
         reply.disable_web_page_preview = true if @redis.get("#{@chat_id}:previews") == 'disable'
@@ -86,86 +88,6 @@ class Bot
         end
         @success = false
       end
-    end
-  end
-
-  def shorten_url(url, flipkart: false)
-    begin
-      if flipkart
-        fkrt_url = "https://affiliate.flipkart.com/a_url_shorten?url=#{CGI.escape(url)}"
-        res = HTTParty.get(fkrt_url, follow_redirects: false)
-        res['response']['shortened_url']
-      else
-        bitly_id = @redis.get("#{@chat_id}:bitly_id")
-        BitlyUrl.new(bitly_id, url).short_url
-      end
-    rescue => e
-      @error = e.inspect
-      puts e.inspect
-    end
-  end
-
-  def process_url(url)
-    case url
-    when /amazon.in/
-      process_amazon_url(url, short: false)
-    when /amzn.to/, /amzn.in/
-      process_amazon_url(url, short: true)
-    when /flipkart.com/
-      process_flipkart_url(url, short: false)
-    when /fkrt.it/
-      process_flipkart_url(url, short: true)
-    else
-      process_redirection(url)
-    end
-  end
-
-  def process_amazon_url(url, short: false)
-    amazon = AffiliateProcess.new(url, 'tag')
-    amazon.fetch_url if short
-    amazon.clean_url
-    amzn_id = @redis.get("#{@chat_id}:amzn_id")
-    amazon.add_tracking_id(amzn_id)
-    shorten_url(amazon.updated_url)
-  end
-
-  def process_flipkart_url(url, short: false)
-    flipkart = AffiliateProcess.new(url, 'affid')
-    flipkart.fetch_url if short
-    flipkart.clean_url
-    fkrt_id = @redis.get("#{@chat_id}:fkrt_id")
-    flipkart.add_tracking_id(fkrt_id)
-    shorten_url(flipkart.updated_url, flipkart: true)
-  end
-
-  def process_redirection(url)
-    url = get_redirected_url(url)
-    return "URL Not Supported: #{url}" if url.is_a?(String)
-
-    return process_flipkart_url(url.request.last_uri) if url.request.last_uri.host.include? 'flipkart'
-
-    return process_amazon_url(url.request.last_uri) if url.request.last_uri.host.include? 'amazon'
-
-    urls = URI.extract(url.parsed_response, %w[http https])
-    urls.each { |u| @flipkart = u if u.include? 'flipkart' }
-    return process_flipkart_url(@flipkart) if defined? @flipkart
-
-    url = get_redirected_url(urls[2]) if url.include? 'cashbackUrl'
-    "URL Not Supported: #{url.is_a?(String) ? url : url.request.last_uri}"
-  end
-
-  def get_redirected_url(url)
-    processed_url = url
-    begin
-      loop do
-        @res = HTTParty.get(processed_url)
-        break if @res.request.last_uri.to_s == processed_url
-
-        processed_url = @res.request.last_uri.to_s
-      end
-      @res
-    rescue => e
-      "Error: #{e.message}: #{@res&.request&.last_uri} "
     end
   end
 
