@@ -30,11 +30,15 @@ class AffiliateProcess
   end
 
   def remove_existing_tracking_ids(url)
-    url = url.split('&').reject do |param|
-      param.match(/^aff.*=/) ||
-        param.match(/^tag=/) ||
-        param.match(/^vsugd.*=/)
+    uri = url.split('?')
+    url_query = []
+    unless uri[1].nil?
+      url_query = uri[1].split('&').reject do |param|
+        param.match(/^aff.*=/) ||
+          param.match(/^tag=/) ||
+          param.match(/^vsugd.*=/)
+      end
     end
-    url.join('&')
+    "#{uri.first}?#{url_query.join('&')}"
   end
 end
