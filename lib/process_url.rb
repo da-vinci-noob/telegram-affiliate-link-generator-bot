@@ -47,8 +47,9 @@ module ProcessUrl
     return amazon(url.request.last_uri) if url.request.last_uri.host.include? 'amazon'
 
     urls = URI.extract(url.parsed_response, %w[http https])
-    urls.each { |u| @flipkart = u if u.include? 'flipkart' }
-    return flipkart(@flipkart) if defined? @flipkart
+    flipkart = nil
+    urls.each { |u| flipkart = u if u.include? 'flipkart' }
+    return flipkart(flipkart) unless flipkart.nil?
 
     url = get_redirected_url(urls[2]) if url.include? 'cashbackUrl'
     "URL Not Supported: #{url.is_a?(String) ? url : url.request.last_uri}"
@@ -56,15 +57,16 @@ module ProcessUrl
 
   def self.get_redirected_url(url)
     processed_url = url
+    res = nil
     loop do
-      @res = HTTParty.get(processed_url)
-      break if @res.request.last_uri.to_s == processed_url
+      res = HTTParty.get(processed_url)
+      break if res.request.last_uri.to_s == processed_url
 
-      processed_url = @res.request.last_uri.to_s
+      processed_url = res.request.last_uri.to_s
     end
-    @res
+    res
   rescue StandardError => e
-    "Error: #{e.message}: #{@res&.request&.last_uri} "
+    "Error: #{e.message}: #{res&.request&.last_uri} "
   end
 
   def self.shorten_url(url, flipkart: false)
@@ -78,6 +80,6 @@ module ProcessUrl
     end
   rescue StandardError => e
     puts e.inspect
-    @error = e.inspect
+    e.inspect
   end
 end
