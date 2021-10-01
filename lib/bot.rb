@@ -69,7 +69,7 @@ class Bot
           end
           reply.text = updated_msg
           to_delete = Redis.current.smembers("#{@chat_id}:delete")
-          reply.text.gsub(/#{Regexp.union(to_delete).source}/i, '') unless to_delete.empty?
+          reply.text.gsub!(/#{Regexp.union(to_delete).source}/i, '') unless to_delete.empty?
         else
           reply.text = "I have no idea what #{@command} means. You can view available commands with \help"
         end
