@@ -40,6 +40,13 @@ module ProcessUrl
 
   def self.redirection(url)
     url = get_redirected_url(url)
+
+    found_url = match_first_url(url)
+
+    found_url = "http://#{found_url}" unless found_url.include? 'http'
+
+    return individual(found_url) if found_url
+
     return "URL Not Supported: #{url}" if url.is_a?(String)
 
     return flipkart(url.request.last_uri) if url.request.last_uri.host.include? 'flipkart'
@@ -81,5 +88,13 @@ module ProcessUrl
   rescue StandardError => e
     puts e.inspect
     e.inspect
+  end
+
+  def self.match_first_url(url)
+    found_url = %r{(https?:/)?\w*\.\w+(\.\w+)*(/\w+)*(\.\w*)?}.match(url).to_s
+
+    return found_url if (found_url.include? 'amazon') || (found_url.include? 'flipkart')
+
+    false
   end
 end
