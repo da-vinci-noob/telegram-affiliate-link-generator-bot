@@ -93,7 +93,7 @@ module ProcessUrl
 
     found_url = "http://#{found_url}" unless found_url.include? 'http'
 
-    return found_url if (found_url.include? 'amazon') || (found_url.include? 'flipkart')
+    return found_url if found_url.include? 'amazon'
 
     false
   end

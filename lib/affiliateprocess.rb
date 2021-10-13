@@ -21,7 +21,7 @@ class AffiliateProcess
     url = @updated_url.to_s
     url = remove_existing_tracking_ids(url)
     uri = Addressable::URI.parse(url)
-    @updated_url = uri.to_s
+    @updated_url = uri.to_s.gsub!('&amp;', '&')
   end
 
   def add_tracking_id(tracking_id)
