@@ -75,16 +75,20 @@ class Bot
         end
         puts "sending #{reply.text.inspect} to @#{message.from.username}"
         reply.disable_web_page_preview = true if Redis.current.get("#{@chat_id}:previews") == 'disable'
-        reply.send_with(bot)
-        channel_id = Redis.current.get("#{@chat_id}:forward")
-        if @success && channel_id
-          begin
-            send_to_channel(channel_id, reply.text).send_with(bot)
-          rescue NameError => e
-            reply.text = 'Please Double check Channel Username and if you have added the Bot as an Admin to the Channel.'
-            reply.send_with(bot)
-            puts 'Error with Channel ID'
+        begin
+          reply.send_with(bot)
+          channel_id = Redis.current.get("#{@chat_id}:forward")
+          if @success && channel_id
+            begin
+              send_to_channel(channel_id, reply.text).send_with(bot)
+            rescue NameError => e
+              reply.text = 'Please Double check Channel Username and if you have added the Bot as an Admin to the Channel.'
+              reply.send_with(bot)
+            end
           end
+        rescue NameError
+          reply.text = 'An error occurred'
+          reply.send_with(bot)
         end
         @success = false
       end

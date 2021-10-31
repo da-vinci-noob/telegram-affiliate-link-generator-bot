@@ -67,6 +67,7 @@ GEM
       equalizer (~> 0.0, >= 0.0.9)
 
 PLATFORMS
+  arm64-darwin-20
   x86_64-linux
 
 DEPENDENCIES
@@ -79,4 +80,4 @@ DEPENDENCIES
   uri
 
 BUNDLED WITH
-   2.2.5
+   2.2.29

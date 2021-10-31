@@ -64,14 +64,14 @@ module ProcessUrl
     processed_url = url
     res = nil
     loop do
-      res = HTTParty.get(processed_url)
+      res = HTTParty.get(processed_url, timeout: 3)
       break if res.request.last_uri.to_s == processed_url
 
       processed_url = res.request.last_uri.to_s
     end
     res
   rescue StandardError => e
-    "Error: #{e.message}: #{res&.request&.last_uri} "
+    "Error: #{e.message}: #{res&.request&.last_uri} #{url if res.nil?} "
   end
 
   def self.shorten_url(url, flipkart: false)
